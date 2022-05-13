@@ -2,76 +2,57 @@ console.log("client started");
 
 import { io, Socket } from "socket.io-client";
 
-import * as dns from "dns";
-import * as os from "os";
-import {
-  event1,
-  startCount,
-  plusOne,
-  pingKey,
-  getIps,
-  sendIp,
-  my_id,
-  IpRequest,
-  sendPort,
-  directPing,
-} from "./consts";
+import { sendIp, my_id, sendPort, directPing, getOthersData } from "./consts";
 import { Server } from "socket.io";
-
-function getMyIp() {
-  return new Promise((res) =>
-    dns.lookup(os.hostname(), (...args) => res(args[1]))
-  );
-}
+import { IpRequest } from "./interfaces";
+import { getMyIp } from "./helpers";
 
 const connectionsData = {} as { [key: string]: IpRequest };
 const sockets = {} as { [key: string]: Socket };
 
-const server_socket = new Server({ transports: ["websocket"] });
-server_socket.on("connection", (socket) => {
+const myServer = new Server({ transports: ["websocket"] });
+myServer.on("connection", (socket) => {
   socket.on(directPing, (other_id) => console.log(my_id, other_id));
 });
-const client = io("ws://127.0.0.1:3000", {
+
+const coordinatorClient = io("ws://127.0.0.1:3000", {
   transports: ["websocket"],
   reconnectionAttempts: 20,
   reconnectionDelay: 1000,
   timeout: 10000,
 });
 
-client.on(event1, (other_id) => console.log(my_id, other_id));
-client.on(startCount, () => client.emit(plusOne, my_id));
-client.on(getIps, async () =>
-  client.emit(sendIp, { id: my_id, ip: await getMyIp() } as IpRequest)
-);
-client.on(sendPort, (data: IpRequest) => {
+coordinatorClient.on("connect", async () => {
+  coordinatorClient.emit(sendIp, {
+    id: my_id,
+    ip: await getMyIp(),
+  } as IpRequest);
+});
+
+function processData(data: IpRequest) {
   connectionsData[data.id] = data;
   if (my_id == data.id && data.port) {
-    server_socket.listen(data.port);
-    console.log(data.port);
+    myServer.listen(data.port);
   }
 
   sockets[data.id] = io("ws://" + data.ip + ":" + data.port, {
     transports: ["websocket"],
-    reconnectionAttempts: 20,
+    reconnectionAttempts: 10,
     reconnectionDelay: 1000,
     timeout: 10000,
   });
+}
+
+coordinatorClient.on(sendPort, (data: IpRequest | IpRequest[]) => {
+  if (Array.isArray(data)) {
+    data.forEach((item) => processData(item));
+  } else {
+    processData(data);
+  }
 });
+
 setTimeout(() => {
-  console.log(connectionsData);
   Object.values(sockets).forEach((socket) => {
-    console.log(my_id, socket.connected);
     socket.emit(directPing, my_id);
   });
-}, 10000);
-
-export function sleep(miliseconds: number) {
-  return new Promise((res) => setInterval(res, miliseconds));
-}
-
-export function ping(timeout: number): Promise<boolean> {
-  return Promise.race([
-    new Promise<boolean>((res) => client.emit(pingKey, res)),
-    new Promise<boolean>((res) => setTimeout(() => res(false), timeout)),
-  ]);
-}
+}, 5000);
