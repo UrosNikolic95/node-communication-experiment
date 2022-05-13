@@ -1,14 +1,13 @@
-console.log("client started");
-
 import { io, Socket } from "socket.io-client";
-
-import { sendIp, my_id, sendPort, directPing } from "./consts";
+import { sendIp, my_id, sendPort } from "./consts";
 import { Server } from "socket.io";
-import { IpRequest } from "./interfaces";
+import { IpRequest, IpRequestCollection } from "./interfaces";
 import { getMyIp } from "./helpers";
 
-const connectionsData = {} as { [key: string]: IpRequest };
-const sockets = {} as { [key: string]: Socket };
+console.log("client started");
+
+export const connectionsData: IpRequestCollection = {};
+export const sockets = {} as { [key: string]: Socket };
 
 const myServer = new Server({ transports: ["websocket"] });
 

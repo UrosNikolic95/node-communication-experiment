@@ -3,3 +3,6 @@ export interface IpRequest {
   ip: string;
   port?: number;
 }
+export interface IpRequestCollection {
+  [key: string]: IpRequest;
+}
