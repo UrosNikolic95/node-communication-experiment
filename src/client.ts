@@ -2,7 +2,7 @@ console.log("client started");
 
 import { io, Socket } from "socket.io-client";
 
-import { sendIp, my_id, sendPort, directPing, getOthersData } from "./consts";
+import { sendIp, my_id, sendPort, directPing } from "./consts";
 import { Server } from "socket.io";
 import { IpRequest } from "./interfaces";
 import { getMyIp } from "./helpers";
@@ -11,9 +11,6 @@ const connectionsData = {} as { [key: string]: IpRequest };
 const sockets = {} as { [key: string]: Socket };
 
 const myServer = new Server({ transports: ["websocket"] });
-myServer.on("connection", (socket) => {
-  socket.on(directPing, (other_id) => console.log(my_id, other_id));
-});
 
 const coordinatorClient = io("ws://127.0.0.1:3000", {
   transports: ["websocket"],
@@ -50,9 +47,3 @@ coordinatorClient.on(sendPort, (data: IpRequest | IpRequest[]) => {
     processData(data);
   }
 });
-
-setTimeout(() => {
-  Object.values(sockets).forEach((socket) => {
-    socket.emit(directPing, my_id);
-  });
-}, 5000);
