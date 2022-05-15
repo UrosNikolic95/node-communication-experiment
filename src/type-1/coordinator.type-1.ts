@@ -1,6 +1,6 @@
 import { Server } from "socket.io";
-import { sendIp, port, sendPort } from "./consts";
-import { IpRequest } from "./interfaces";
+import { sendIp, port, sendPort } from "../consts";
+import { IpRequest } from "../interfaces";
 
 console.log("coordinator started");
 

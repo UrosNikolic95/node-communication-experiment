@@ -1,8 +1,8 @@
 import { io, Socket } from "socket.io-client";
-import { sendIp, my_id, sendPort, shareData } from "./consts";
 import { Server } from "socket.io";
-import { IpRequest, IpRequestCollection } from "./interfaces";
-import { getMyIp } from "./helpers";
+import { IpRequest, IpRequestCollection } from "../interfaces";
+import { getMyIp } from "../helpers";
+import { shareData, sendIp, my_id, sendPort } from "../consts";
 
 console.log("client started");
 
